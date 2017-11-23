@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.opencsv.CSVReader;
@@ -54,7 +56,7 @@ public class ProcessPostcodes {
 	}
 	
 	public static boolean isIn(String postcode, String[] matches){
-		return Arrays.stream(matches).anyMatch(s -> postcode.startsWith(s));
+		return Arrays.stream(matches).anyMatch(s -> postcode.equals(s));
 	}
 
 }

@@ -1,5 +1,8 @@
 package uk.org.cetis.google;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class PostCodeElement {
 
 		public int getId() {
@@ -28,7 +31,12 @@ public class PostCodeElement {
 	}
 	
 	public String getArea(){
-		return this.getPostcode().replaceAll("\\d","");
+		String pattern = "(\\D{1,2})";
+		Pattern r = Pattern.compile(pattern);
+		Matcher m = r.matcher(postcode);
+		m.find();
+	    return m.group(1);
+		//return this.getPostcode().replaceAll("\\d","");
 	}
 		private int id;
 	     private String postcode;
