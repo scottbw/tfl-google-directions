@@ -76,7 +76,7 @@ public class GatherGoogleData {
 		//
 		// 3. Load in our list of London and nearby postcode districts
 		//
-		List<PostCodeElement> postcodes = new CsvToBeanBuilder(new FileReader("src/main/resources/london-outcodes.csv"))
+		List<PostCodeElement> postcodes = new CsvToBeanBuilder(new FileReader("src/main/resources/nearby-outcodes.csv"))
 		.withType(PostCodeElement.class).build().parse();
 		
 		String[] destinationPostcodes = new String[postcodes.size()];
@@ -132,12 +132,16 @@ public class GatherGoogleData {
 			DistanceMatrixRow row = matrix.rows[i];
 			System.out.println("FROM:"+matrix.originAddresses[i]);
 			for (int d = 0; d < row.elements.length; d ++){
+				try {
 				DistanceMatrixElement element = row.elements[d];
 				CampusToPostcode result = new CampusToPostcode(campus);
 				result.duration = element.duration.inSeconds/60; //minutes
 				result.distance = element.distance.inMeters/1000; //km
 				result.originPostcode = postcodes[d];
 				results.add(result);
+				} catch (Exception ex){
+					System.out.println("Error reading data for "+postcodes[d]);
+				}
 			}
 		}
 		
