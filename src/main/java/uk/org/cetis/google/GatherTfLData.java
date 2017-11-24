@@ -7,6 +7,7 @@ import java.io.Writer;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CyclicBarrier;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -71,6 +72,7 @@ public class GatherTfLData {
 		//
 		List<Campus> campuses = new CsvToBeanBuilder(new FileReader("src/main/resources/campus.csv"))
 		.withType(Campus.class).build().parse();
+		campuses.remove(15);
 
 		//
 		// 3. Load in our list of London postcode sectors
@@ -81,44 +83,39 @@ public class GatherTfLData {
 		//
 		// 4. Call the API for each pairing of source and destination
 		//
-		for (Campus campus: campuses){
-			for (PostCodeElement postcode: postcodes){
-
-				try {
-					CampusToPostcode result = callJourneyApi(campus, postcode);
-					results.add(result);
-
-					try {
-						Thread.sleep(500);                 //1000 milliseconds is one second.
-					} catch(InterruptedException ex) {
-						Thread.currentThread().interrupt();
-					}
-
-					System.out.print('.');
-				} catch (Exception e) {
-					System.out.print(postcode.getPostcode());
-				}
-
-			}
-
+		
+		CyclicBarrier barrier = new CyclicBarrier(campuses.size()+1);
+		
+		List<TfLDrone> drones = new ArrayList<TfLDrone>();
+		for (Campus campus: campuses){	
+			TfLDrone drone = new TfLDrone(postcodes, campus, APPID, APIKEY, barrier);
+			drones.add(drone);
+			drone.start();
 		}
-
-		System.out.println("Done!");
+		
+		barrier.await(); // label3
+	    System.out.println("Please wait...");
+	    barrier.await(); // label4
+	    System.out.println("Finished");
 
 		//
 		// 4. Save the data
 		//
+	    for (TfLDrone drone: drones){
+	    	results.addAll(drone.results);
+	    }
+	    
 		Writer writer = new FileWriter("src/main/resources/london-journeys-sectors.csv");
 		StatefulBeanToCsv beanToCsv = new StatefulBeanToCsvBuilder(writer).build();
 		beanToCsv.write(results);
 		writer.close();
-	}
+	} 
 
 	public static CampusToPostcode callJourneyApi(Campus campus, PostCodeElement postcode) throws ClientProtocolException, IOException, URISyntaxException{
 		CampusToPostcode data = new CampusToPostcode(campus);
 		data.originPostcode = postcode.getPostcode();
 
-		String path = String.format("/journey/journeyresults/%f,%f/to/%s", postcode.getLatitude(), postcode.getLongitude(), campus.postcode.trim().replace(" ", ""));
+		String path = String.format("/journey/journeyresults/%f,%f/to/%s?date=20171120&time=1000&timeis=arriving", postcode.getLatitude(), postcode.getLongitude(), campus.postcode.trim().replace(" ", ""));
 
 		HttpClient client = HttpClientBuilder.create().build();
 
@@ -142,7 +139,6 @@ public class GatherTfLData {
 		
 		return data;
 	}
-
 
 
 }

@@ -100,7 +100,6 @@ public class GatherGoogleData {
 				for (int i = 0; i < end-d; i++){
 					coords[i] = new LatLng(postcodes.get(d+i).getLatitude(), (postcodes.get(d+i).getLongitude()));
 					pcodes[i] = postcodes.get(d+i).getPostcode();
-					System.out.println(coords[i].toString());
 				}				
 				
 				System.out.print(".");
